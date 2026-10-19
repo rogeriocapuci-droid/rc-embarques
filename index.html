@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#1d5f31">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -271,6 +271,28 @@ textarea.inp { padding: 10px 12px; min-height: 64px; }
 .modal textarea { width: 100%; min-height: 220px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--bg); padding: 10px; font-size: 14px; }
 .c-B { --cc: var(--cB); } .c-N { --cc: var(--cN); } .c-V { --cc: var(--cV); }
 .c-C { --cc: var(--cC); } .c-L { --cc: var(--cL); } .c-M { --cc: var(--cM); }
+.z1 { --zc: #e2ab00; } .z2 { --zc: var(--ink); } .z3 { --zc: #3aa6d8; } .z4 { --zc: #8a8a8a; } .z5 { --zc: #c0392b; } .z6 { --zc: #4caf50; }
+.cell.fz { box-shadow: inset 0 -3px 0 var(--zc); }
+.fzb, .fzb2 { background: var(--zc); color: #111; font-weight: 800; border-radius: 5px; text-align: center; }
+.z2 .fzb, .z2 .fzb2, .fazb.z2 b { color: var(--bg); }
+.fzb { position: absolute; top: 2px; left: 8px; font-size: 10px; line-height: 12px; min-width: 12px; padding: 0 3px; }
+.fzb2 { display: inline-block; min-width: 24px; padding: 1px 7px; }
+.dk-faz { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 5px; }
+.fazb { border: 2px solid var(--line); border-radius: 9px; min-height: 38px; background: var(--bg); display: flex; align-items: center; gap: 6px; padding: 0 8px; font-weight: 600; font-size: 13px; min-width: 0; }
+.fazb b { background: var(--zc); color: #111; border-radius: 5px; min-width: 18px; text-align: center; font-size: 12px; }
+.fazb span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fazb[aria-pressed="true"] { border-color: var(--zc); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--zc); }
+.fcrow { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 1.2fr); gap: 8px; align-items: center; margin-bottom: 6px; }
+.fcn { overflow-wrap: anywhere; font-size: 14px; }
+.colfz { display: flex; align-items: center; gap: 3px; min-height: 30px; min-width: 0; padding: 0 4px; border: 1.5px solid var(--zc); border-bottom-width: 3px; border-radius: 6px; background: var(--bg); font-size: 11px; font-weight: 700; }
+.colfz b { background: var(--zc); color: #111; border-radius: 4px; min-width: 14px; text-align: center; font-size: 10px; }
+.colfz.z2 b { color: var(--bg); }
+.colfz span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell.skip { background: repeating-linear-gradient(135deg, transparent 0 4px, var(--line) 4px 5px); border-left-color: var(--line); opacity: .75; }
+* { touch-action: manipulation; -webkit-touch-callout: none; }
+button, .cell, .key, .tab { -webkit-user-select: none; user-select: none; }
+textarea { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+.pct input, input, select, textarea { font-size: 16px; }
 @media (max-width: 380px) { .dk-val { font-size: 28px; } .kv { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
 </style>
@@ -694,8 +716,8 @@ function calc(l, fazId) {
   CATS.forEach(k => per[k] = { cab: 0, peso: 0, carc: 0 });
   const flagged = [];
   l.folhas.forEach((f, fi) => {
-    if (fazId && f.faz !== fazId) return;
     f.cells.forEach((c, i) => {
+      if (fazId && (c.fz || f.faz) !== fazId) return;
       const r = effRend(l, f, c.cat);
       const p = per[c.cat];
       p.cab += c.n; p.peso += c.w; p.carc += c.w * r / 100;
@@ -713,7 +735,8 @@ function calc(l, fazId) {
   bruto = r2(bruto);
   const fun = r2(bruto * (+l.funrural || 0) / 100);
   const sen = r2(bruto * (+l.senar || 0) / 100);
-  const ajuste = +l.ajuste || 0;
+  let ajuste = +l.ajuste || 0;
+  if (fazId && ajuste) { const tb = calc(l, null).bruto; ajuste = tb ? r2(ajuste * bruto / tb) : 0; }
   return { per, bruto, cab, peso, carc, arr: carc / 15, fun, sen, ajuste, liquido: r2(bruto - fun - sen - ajuste), flagged };
 }
 //#LOGIC-END
@@ -741,7 +764,7 @@ function newLote() {
       L: { nome: 'Vaca leiteira', sigla: 'LT', rend: 50, preco: 0 },
       M: { nome: 'Boi marruco', sigla: 'BM', rend: 50, preco: 0 }
     },
-    funrural: 1.63, senar: 0.2, ajuste: 0,
+    funrural: 1.63, senar: 0.2, ajuste: 0, fazCat: {},
     folhas: [{ id: uid(), faz: 'f1', rend: {}, cells: [] }]
   };
 }
@@ -763,8 +786,10 @@ try { const raw = localStorage.getItem(KEY); if (raw) DB = JSON.parse(raw); } ca
 if (!DB.lotes || !DB.lotes.length) { DB = { lotes: [exemplo()] }; }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(DB)); } catch (e) {} }
 let view = 'home', tab = 'pes', curId = null;
-const K = { buf: '', cat: 'B', flag: false, n: 1, sel: null, folha: null };
+const K = { buf: '', cat: 'B', flag: false, n: 1, sel: null, folha: null, faz: null };
 const cur = () => DB.lotes.find(l => l.id === curId);
+const fzIdx = (l, id) => Math.max(0, l.fazendas.findIndex(z => z.id === id));
+function fazAtual(l) { return (K.faz && l.fazendas.some(z => z.id === K.faz)) ? K.faz : l.fazendas[0].id; }
 const getFolha = (l, id) => l.folhas.find(f => f.id === id);
 const fazNome = (l, id) => { const f = l.fazendas.find(x => x.id === id); return (f && f.nome) || 'Sem nome'; };
 const fazList = l => l.fazendas.map(f => f.nome || 'Sem nome').join(' + ');
@@ -835,19 +860,30 @@ function renderFolhas() {
 }
 function folhaHtml(l, f, fi, multi) {
   const active = f.id === K.folha;
-  const used = CATS.filter(k => f.cells.some(c => c.cat === k) || (active && k === K.cat));
+  const used = CATS.filter(k => f.cells.some(c => c.cat === k && !c.skip) || (active && k === K.cat));
   const total = f.cells.reduce((s, c) => s + c.w, 0);
   const cab = f.cells.reduce((s, c) => s + c.n, 0);
   const nextIdx = f.cells.length < 80 ? f.cells.length : -1;
+  let hd = '';
+  if (multi && l.fazModo === 'col') {
+    hd = '<div class="rn"></div>';
+    for (let c = 0; c < 4; c++) {
+      const id = (f.colFaz && f.colFaz[c]) || f.faz, zi = fzIdx(l, id);
+      hd += `<button class="colfz z${(zi % 6) + 1}" data-act="colfaz" data-folha="${f.id}" data-col="${c}" aria-label="Fazenda da coluna ${c + 1}: ${esc(fazNome(l, id))}. Toque para trocar."><b>${zi + 1}</b><span>${esc(fazNome(l, id))}</span></button>`;
+    }
+  }
   let cells = '';
   for (let r = 0; r < 20; r++) {
     cells += `<div class="rn">${r + 1}</div>`;
     for (let c = 0; c < 4; c++) {
       const i = c * 20 + r, cell = f.cells[i];
-      if (cell) {
+      if (cell && cell.skip) {
+        cells += `<button class="cell skip" data-act="unskip" data-folha="${f.id}" data-idx="${i}" data-cell="${f.id}:${i}" aria-label="Espaço pulado. Toque para desfazer."></button>`;
+      } else if (cell) {
         const sel = K.sel && K.sel.folha === f.id && K.sel.idx === i;
-        cells += `<button class="cell c-${cell.cat}${sel ? ' sel' : ''}" data-act="cell" data-folha="${f.id}" data-idx="${i}" data-cell="${f.id}:${i}" aria-label="Peso ${cell.w}, ${esc(catLabel(l, cell.cat))}">
-          ${cell.flag ? '<span class="fl">!</span>' : ''}${cell.n > 1 ? `<span class="g">×${cell.n}</span>` : ''}${cell.w}</button>`;
+        const zi = fzIdx(l, cell.fz || f.faz);
+        cells += `<button class="cell c-${cell.cat}${multi ? ' fz z' + ((zi % 6) + 1) : ''}${sel ? ' sel' : ''}" data-act="cell" data-folha="${f.id}" data-idx="${i}" data-cell="${f.id}:${i}" aria-label="Peso ${cell.w}, ${esc(catLabel(l, cell.cat))}${multi ? ', ' + esc(fazNome(l, cell.fz || f.faz)) : ''}">
+          ${multi ? `<span class="fzb">${zi + 1}</span>` : ''}${cell.flag ? '<span class="fl">!</span>' : ''}${cell.n > 1 ? `<span class="g">×${cell.n}</span>` : ''}${cell.w}</button>`;
       } else {
         const isNext = active && i === nextIdx && !K.sel;
         cells += `<div class="cell empty${isNext ? ' next' : ''}" data-cell="${f.id}:${i}"></div>`;
@@ -861,11 +897,10 @@ function folhaHtml(l, f, fi, multi) {
   }
   return `<section class="folha${active ? ' active' : ''}" data-folhabox="${f.id}">
     <div class="fo-head"><h3>Folha ${fi + 1}</h3>
-      ${multi ? `<select data-folhafaz="${f.id}" aria-label="Fazenda da folha ${fi + 1}">${l.fazendas.map(z => `<option value="${z.id}"${z.id === f.faz ? ' selected' : ''}>${esc(z.nome || 'Sem nome')}</option>`).join('')}</select>` : ''}
       ${active ? '<span class="tag" style="margin-left:auto">lançando aqui</span>' : `<button class="btn alt sm pick" data-act="usar" data-folha="${f.id}">Lançar nesta</button>`}
     </div>
     <div class="pcts">${used.map(k => `<label class="pct c-${k}">${esc(l.cats[k].sigla)}<input inputmode="decimal" data-folhapct="${f.id}:${k}" value="${f.rend[k] === undefined ? '' : String(f.rend[k]).replace('.', ',')}" placeholder="${String(l.cats[k].rend).replace('.', ',')}" aria-label="Rendimento ${esc(catLabel(l, k))}"><em>%</em></label>`).join('')}</div>
-    <div class="grid">${cells}${sums}</div>
+    <div class="grid">${hd}${cells}${sums}</div>
     <div class="fo-foot"><span><b>${nf0.format(cab)}</b> cab</span><span>Total da folha <b>${nf0.format(total)} kg</b></span></div>
   </section>`;
 }
@@ -882,13 +917,14 @@ function renderDock() {
   }
   d.innerHTML = `<div class="dock c-${K.cat}"><div class="dock-in">
     <div class="dk-top"><span class="where">${where}</span>
-      ${K.sel ? '<span class="row" style="gap:6px;flex-wrap:nowrap"><button class="flagbtn" data-act="cancelsel">Cancelar</button><button class="flagbtn" data-act="delcell" style="color:var(--danger)">Apagar peso</button></span>' : ''}</div>
+      ${K.sel ? '<span class="row" style="gap:6px;flex-wrap:nowrap"><button class="flagbtn" data-act="cancelsel">Cancelar</button><button class="flagbtn" data-act="delcell" style="color:var(--danger)">Apagar peso</button></span>' : '<button class="flagbtn" data-act="proxcol">Próx. coluna ⇥</button>'}</div>
     <div class="dk-disp">
       <div class="dk-val">${K.buf ? esc(K.buf) : '<span class="ph">0</span>'}<small>kg</small></div>
       <div class="seg-wrap">animais
         <div class="seg" role="group" aria-label="Animais por pesagem">${[1, 2, 3].map(n => `<button data-act="setn" data-n="${n}" aria-pressed="${K.n === n}">${n}</button>`).join('')}</div></div>
       <button class="flagbtn" data-act="flag" aria-pressed="${K.flag}">! Obs.</button>
     </div>
+    ${l.fazendas.length > 1 && (l.fazModo !== 'col' || K.sel) ? `<div class="dk-faz" role="group" aria-label="Fazenda do animal">${l.fazendas.map((z, i) => `<button class="fazb z${(i % 6) + 1}" data-act="faz" data-id="${z.id}" aria-pressed="${fazAtual(l) === z.id}"><b>${i + 1}</b><span>${esc(z.nome || 'Sem nome')}</span></button>`).join('')}</div>` : ''}
     <div class="dk-cats">${CATS.map(k => `<button class="catb c-${k}" data-act="cat" data-cat="${k}" aria-pressed="${K.cat === k}"><b>${esc(l.cats[k].sigla)}</b><span>${esc(l.cats[k].nome)}</span></button>`).join('')}</div>
     <div class="dk-pad">
       ${[1, 2, 3].map(n => `<button class="key" data-act="dig" data-d="${n}">${n}</button>`).join('')}<button class="key bk" data-act="bk" aria-label="Apagar dígito">⌫</button>
@@ -905,12 +941,12 @@ function lancar() {
   let target;
   if (K.sel) {
     const f = getFolha(l, K.sel.folha);
-    Object.assign(f.cells[K.sel.idx], { w, cat: K.cat, n: K.n, flag: K.flag });
+    Object.assign(f.cells[K.sel.idx], { w, cat: K.cat, n: K.n, flag: K.flag, fz: fazAtual(l) });
     target = f.id + ':' + K.sel.idx; K.sel = null;
   } else {
     let f = getFolha(l, K.folha);
-    if (f.cells.length >= 80) { f = { id: uid(), faz: f.faz, rend: {}, cells: [] }; l.folhas.push(f); K.folha = f.id; }
-    f.cells.push({ w, cat: K.cat, n: K.n, flag: K.flag });
+    if (f.cells.length >= 80) { f = { id: uid(), faz: f.faz, colFaz: (f.colFaz || []).slice(), rend: {}, cells: [] }; l.folhas.push(f); K.folha = f.id; }
+    f.cells.push({ w, cat: K.cat, n: K.n, flag: K.flag, fz: (l.fazModo === 'col') ? ((f.colFaz && f.colFaz[Math.floor(f.cells.length / 20)]) || f.faz) : fazAtual(l) });
     target = f.id + ':' + (f.cells.length - 1);
   }
   K.buf = ''; K.flag = false; save();
@@ -949,22 +985,46 @@ function missing(l, c) {
   const m = CATS.filter(k => c.per[k].cab > 0 && !(+l.cats[k].preco > 0)).map(k => l.cats[k].nome);
   return m.length ? `<div class="notice">Falta informar o preço (R$/@) de: ${esc(m.join(', '))}. Vá em Dados.</div>` : '';
 }
+function fazCards(l) {
+  if (l.fazendas.length < 2) return '';
+  const zc = i => 'z' + ((i % 6) + 1);
+  return `<h3 style="margin:14px 0 8px">Por fazenda</h3>` + l.fazendas.map((z, i) => {
+    const x = calc(l, z.id);
+    const head = `<div class="cathead"><span class="fzb2">${i + 1}</span><b>${esc(z.nome || 'Sem nome')}</b>${x.cab ? `<span class="muted small" style="margin-left:auto">${nf0.format(x.cab)} cab · ${nf0.format(x.peso)} kg</span>` : ''}</div>`;
+    if (!x.cab) return `<div class="card ${zc(i)}">${head}<p class="muted small" style="margin:0">Nenhum animal lançado para esta fazenda.</p></div>`;
+    return `<div class="card ${zc(i)}">${head}
+      <div class="scroll-x"><table class="tbl"><tr><th>Categoria</th><th>Cab</th><th>Peso kg</th><th>@</th><th>Valor</th></tr>
+      ${CATS.filter(k => x.per[k].cab > 0).map(k => `<tr><td><span class="chip c-${k}">${esc(l.cats[k].sigla)}</span></td><td>${nf0.format(x.per[k].cab)}</td><td>${nf0.format(x.per[k].peso)}</td><td>${nf2.format(x.per[k].arr)}</td><td>${nf2.format(x.per[k].valor)}</td></tr>`).join('')}</table></div>
+      <div class="kv" style="margin-top:8px"><div><span>Bruto</span><b>${brl(x.bruto)}</b></div><div><span>Funrural + Senar</span><b>${brl(x.fun + x.sen)}</b></div><div><span>Líquido</span><b>${brl(x.liquido)}</b></div></div></div>`;
+  }).join('') + `<p class="muted small" style="margin:0 0 10px">${l.separar ? 'No PDF sai um romaneio por fazenda, mais o fechamento geral.' : 'No PDF sai um romaneio único, com a fazenda de cada animal marcada pelo número.'}</p>`;
+}
 function renderFech() {
   const l = cur(); const c = calc(l, null);
   let h = `<div class="row" style="margin-top:6px"><button class="btn gold" data-act="pdf" style="flex:1">Gerar PDF</button><button class="btn alt" data-act="copy" style="flex:1">Copiar resumo</button></div>`;
   h += missing(l, c);
   if (!c.cab) h += `<div class="notice">Nenhum peso lançado ainda. Use a aba Pesagem.</div>`;
-  if (l.fazendas.length > 1) {
-    h += `<div class="card" style="margin-top:12px"><h3>Por fazenda</h3><div class="scroll-x"><table class="tbl"><tr><th>Fazenda</th><th>Cab</th><th>Peso kg</th><th>Líquido</th></tr>
-      ${l.fazendas.map(z => { const x = calc(l, z.id); return `<tr><td>${esc(z.nome || 'Sem nome')}</td><td>${nf0.format(x.cab)}</td><td>${nf0.format(x.peso)}</td><td>${brl(x.liquido)}</td></tr>`; }).join('')}
-      <tr><th>Total</th><th>${nf0.format(c.cab)}</th><th>${nf0.format(c.peso)}</th><th>${brl(c.liquido)}</th></tr></table></div>
-      <p class="muted small" style="margin:8px 0 0">${l.separar ? 'No PDF sai um romaneio por fazenda, mais o fechamento geral.' : 'No PDF sai um romaneio único com as fazendas juntas.'}</p></div>`;
-  }
+  h += fazCards(l);
   h += fechBlock(l, c, '');
   $('#pane').innerHTML = h;
 }
 
 /* ---------- Dados ---------- */
+function fazModoCard(l) {
+  if (l.fazendas.length < 2) return '';
+  const m = l.fazModo === 'col' ? 'col' : 'cat';
+  return `<div class="card"><h3>Como separar as fazendas</h3>
+    <div class="seg" role="group" aria-label="Separar por"><button data-act="fazmodo" data-v="cat" aria-pressed="${m === 'cat'}" style="padding:0 14px">Por categoria</button><button data-act="fazmodo" data-v="col" aria-pressed="${m === 'col'}" style="padding:0 14px">Por coluna</button></div>
+    <p class="muted small" style="margin:8px 0 0">${m === 'cat' ? 'Cada categoria pertence a uma fazenda, como boi de uma e vaca de outra.' : 'Cada coluna da folha pertence a uma fazenda. Na aba Pesagem, toque no nome da fazenda sobre a coluna para trocar. Use Próx. coluna para pular para o começo da coluna seguinte.'}</p></div>`;
+}
+function fazCatCard(l) {
+  if (l.fazendas.length < 2 || l.fazModo === 'col') return '';
+  const cnt = {}; l.folhas.forEach(f => f.cells.forEach(c => { cnt[c.cat] = (cnt[c.cat] || 0) + c.n; }));
+  const com = CATS.filter(k => cnt[k]); const ks = com.length ? com : CATS;
+  const opts = sel => '<option value="">Escolher</option>' + l.fazendas.map(z => `<option value="${z.id}"${z.id === sel ? ' selected' : ''}>${esc(z.nome || 'Sem nome')}</option>`).join('');
+  return `<div class="card"><h3>Fazenda de cada categoria</h3>
+    <p class="muted small" style="margin:0 0 10px">Escolha de qual fazenda saiu cada categoria. Vale para os pesos já lançados e para os próximos. Se um animal for de outra fazenda, toque no peso na aba Pesagem e troque a fazenda no teclado.</p>
+    ${ks.map(k => `<div class="fcrow c-${k}"><span class="chip">${esc(l.cats[k].sigla)}</span><span class="fcn">${esc(l.cats[k].nome)}${cnt[k] ? ' · ' + cnt[k] + ' cab' : ''}</span><select class="inp" data-fazcat="${k}" aria-label="Fazenda de ${esc(l.cats[k].nome)}">${opts((l.fazCat || {})[k])}</select></div>`).join('')}</div>`;
+}
 function renderDados() {
   const l = cur();
   $('#pane').innerHTML = `
@@ -979,6 +1039,8 @@ function renderDados() {
       ${l.fazendas.length > 1 ? `<div class="notice" style="background:var(--gold-soft)">Embarque em mais de uma fazenda. Como fechar?</div>
         <div class="seg" role="group" aria-label="Modo dos romaneios"><button data-act="separar" data-v="0" aria-pressed="${!l.separar}" style="padding:0 14px">Romaneio único</button><button data-act="separar" data-v="1" aria-pressed="${l.separar}" style="padding:0 14px">Um por fazenda</button></div>
         <p class="muted small" style="margin:8px 0 0">Em cada folha da aba Pesagem você escolhe a fazenda. O fechamento mostra o total e a divisão por fazenda.</p>` : ''}</div>
+    ${fazModoCard(l)}
+    ${fazCatCard(l)}
     <div class="card"><h3>Balança</h3>
       <p class="muted small" style="margin:0 0 8px">Quantos animais a balança pesa de uma vez. Dá para trocar no teclado a cada pesagem.</p>
       <div class="seg" role="group" aria-label="Animais por pesagem">${[1, 2, 3].map(n => `<button data-act="modo" data-n="${n}" aria-pressed="${l.modo === n}">${n} animal${n > 1 ? 'is' : ''}</button>`).join('')}</div></div>
@@ -1007,6 +1069,7 @@ function resumoTexto(l) {
   L.push('', `Total: ${nf0.format(c.cab)} cab · ${nf0.format(c.peso)} kg vivo · ${nf2.format(c.arr)} @`, `Bruto: ${brl(c.bruto)}`, `Funrural ${nf2.format(l.funrural)}%: - ${brl(c.fun)}`, `Senar ${nf2.format(l.senar)}%: - ${brl(c.sen)}`);
   if (c.ajuste) L.push(`Desconto: - ${brl(c.ajuste)}`);
   L.push(`*Líquido: ${brl(c.liquido)}*`);
+  if (l.fazendas.length > 1) { L.push('', 'Por fazenda:'); l.fazendas.forEach(z => { const x = calc(l, z.id); if (x.cab) L.push(`${z.nome || 'Sem nome'}: ${nf0.format(x.cab)} cab · ${nf0.format(x.peso)} kg · líquido ${brl(x.liquido)}`); }); }
   if (c.flagged.length) L.push('', `Em observação: ${c.flagged.length} animal(is)`);
   return L.join('\n');
 }
@@ -1049,7 +1112,8 @@ function buildPdf(l) {
   const W = 210, M = 12, PH = 287;
   const GREEN = [29, 95, 49], INK = [21, 35, 26], MUTE = [90, 102, 93];
   const multi = l.fazendas.length > 1;
-  const groups = (l.separar && multi) ? l.fazendas.map(z => z.id) : [null];
+  const groups0 = (l.separar && multi) ? l.fazendas.map(z => z.id).filter(id => calc(l, id).cab > 0) : [null];
+  const groups = groups0.length ? groups0 : [null];
 
   function header(y, sub) {
     doc.addImage(LOGO, 'PNG', M, y, 19, 22.4);
@@ -1068,14 +1132,19 @@ function buildPdf(l) {
       yy += 6;
     });
     if (l.obs && !l.exemplo) { doc.setFont('helvetica', 'bold'); doc.text('Obs.:', M, yy + 3); doc.setFont('helvetica', 'normal'); doc.text(l.obs, M + 24, yy + 3, { maxWidth: W - 2 * M - 24 }); yy += 6; }
+    if (multi && !l.separar) {
+      doc.setFont('helvetica', 'bold'); doc.text('Fazendas:', M, yy + 3); doc.setFont('helvetica', 'normal');
+      doc.text(l.fazendas.map((z, i) => 'F' + (i + 1) + ' = ' + (z.nome || 'Sem nome')).join('    '), M + 24, yy + 3, { maxWidth: W - 2 * M - 24 }); yy += 6;
+    }
     return yy + 3;
   }
-  function folhaPdf(f, fi, y) {
+  function folhaPdf(f, fi, y, g) {
+    const cells = f.cells.filter(c => !g || ((c.fz || f.faz) === g && !c.skip));
     const labW = 8, colW = (W - 2 * M - labW) / 4, rh = 5;
     doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...INK);
-    doc.text('Folha ' + (fi + 1) + (multi ? ' · ' + fazNome(l, f.faz) : ''), M, y + 3);
-    const used = CATS.filter(k => f.cells.some(c => c.cat === k));
-    let px = M + 52;
+    doc.text('Folha ' + (fi + 1) + (g ? ' · ' + fazNome(l, g) : ''), M, y + 3);
+    const used = CATS.filter(k => cells.some(c => c.cat === k && !c.skip));
+    let px = M + doc.getTextWidth('Folha ' + (fi + 1) + (g ? ' · ' + fazNome(l, g) : '')) + 6;
     doc.setFontSize(8.5);
     used.forEach(k => {
       doc.setFillColor(...hexRgb(CAT_HEX[k])); doc.rect(px, y - 0.6, 3, 3, 'F');
@@ -1089,14 +1158,14 @@ function buildPdf(l) {
       const yy = y + r * rh;
       doc.setFontSize(7); doc.setTextColor(...MUTE); doc.setFont('helvetica', 'normal'); doc.text(String(r + 1), M + 2, yy + 3.6);
       for (let c = 0; c < 4; c++) {
-        const x = M + labW + c * colW; const cell = f.cells[c * 20 + r];
+        const x = M + labW + c * colW; const cell = cells[c * 20 + r];
         doc.rect(x, yy, colW, rh);
-        if (cell) {
+        if (cell && !cell.skip) {
           doc.setFillColor(...hexRgb(CAT_HEX[cell.cat])); doc.rect(x, yy, 2, rh, 'F');
           doc.setTextColor(...INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5);
           doc.text(String(cell.w), x + colW - 2, yy + 3.8, { align: 'right' });
           doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(...MUTE);
-          let tag = l.cats[cell.cat].sigla + (cell.n > 1 ? ' x' + cell.n : '') + (cell.flag ? ' *' : '');
+          let tag = l.cats[cell.cat].sigla + (cell.n > 1 ? ' x' + cell.n : '') + (cell.flag ? ' *' : '') + (multi && !g ? ' F' + (fzIdx(l, cell.fz || f.faz) + 1) : '');
           doc.text(tag, x + 3.2, yy + 3.6);
         }
       }
@@ -1104,11 +1173,11 @@ function buildPdf(l) {
     const ys = y + 20 * rh;
     doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...INK);
     for (let c = 0; c < 4; c++) {
-      const s = f.cells.slice(c * 20, c * 20 + 20).reduce((a, x) => a + x.w, 0);
+      const s = cells.slice(c * 20, c * 20 + 20).reduce((a, x) => a + x.w, 0);
       doc.rect(M + labW + c * colW, ys, colW, rh);
       if (s) doc.text(nf0.format(s), M + labW + (c + 1) * colW - 2, ys + 3.8, { align: 'right' });
     }
-    const tot = f.cells.reduce((a, x) => a + x.w, 0), cab = f.cells.reduce((a, x) => a + x.n, 0);
+    const tot = cells.reduce((a, x) => a + x.w, 0), cab = cells.reduce((a, x) => a + x.n, 0);
     doc.text('Total da folha: ' + nf0.format(tot) + ' kg · ' + nf0.format(cab) + ' cab', W - M, ys + rh + 5, { align: 'right' });
     return ys + rh + 9;
   }
@@ -1150,9 +1219,29 @@ function buildPdf(l) {
     }
     return y + 8;
   }
+  function fazTabPdf(y) {
+    const rows = l.fazendas.map((z, i) => ({ z, i, x: calc(l, z.id) })).filter(r => r.x.cab > 0);
+    if (!rows.length) return y;
+    if (y + 14 + rows.length * 6 + 6 > PH) { doc.addPage(); y = M + 4; }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...GREEN); doc.text('Por fazenda', M, y + 3); y += 8;
+    const cols = [['Fazenda', M, 'l'], ['Cab', 98, 'r'], ['Peso vivo', 122, 'r'], ['@', 142, 'r'], ['Bruto', 170, 'r'], ['Líquido', W - M, 'r']];
+    doc.setFontSize(8); doc.setTextColor(...MUTE);
+    cols.forEach(cl => doc.text(cl[0], cl[1], y, { align: cl[2] === 'r' ? 'right' : 'left' }));
+    doc.setDrawColor(...GREEN); doc.setLineWidth(0.3); doc.line(M, y + 1.5, W - M, y + 1.5); y += 6;
+    doc.setFontSize(9.5); doc.setTextColor(...INK);
+    rows.forEach(r => {
+      doc.setFont('helvetica', 'bold'); doc.text('F' + (r.i + 1) + '  ' + (r.z.nome || 'Sem nome'), M, y, { maxWidth: 78 });
+      doc.setFont('helvetica', 'normal');
+      doc.text(nf0.format(r.x.cab), 98, y, { align: 'right' }); doc.text(nf0.format(r.x.peso), 122, y, { align: 'right' });
+      doc.text(nf2.format(r.x.arr), 142, y, { align: 'right' }); doc.text(nf2.format(r.x.bruto), 170, y, { align: 'right' });
+      doc.setFont('helvetica', 'bold'); doc.text(nf2.format(r.x.liquido), W - M, y, { align: 'right' });
+      y += 6;
+    });
+    return y;
+  }
   function assinaturas(y) {
-    if (y + 22 > PH) { doc.addPage(); y = M + 10; }
-    y = y + 6;
+    if (y + 14 > PH) { doc.addPage(); y = M + 10; }
+    y = y + 4;
     doc.setDrawColor(...INK); doc.setLineWidth(0.3);
     doc.line(M, y + 8, M + 78, y + 8); doc.line(W - M - 78, y + 8, W - M, y + 8);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...MUTE);
@@ -1162,17 +1251,18 @@ function buildPdf(l) {
     if (gi > 0) doc.addPage();
     let y = header(M, g ? 'Fazenda: ' + fazNome(l, g) : '');
     l.folhas.forEach((f, fi) => {
-      if (g && f.faz !== g) return;
-      if (!f.cells.length) return;
+      if (!f.cells.some(c => !c.skip && (!g || (c.fz || f.faz) === g))) return;
       if (y + 6 + 22 * 5 + 14 > PH) { doc.addPage(); y = M + 4; }
-      y = folhaPdf(f, fi, y);
+      y = folhaPdf(f, fi, y, g);
     });
     y = fechPdf(calc(l, g), y, g ? 'Fechamento · ' + fazNome(l, g) : 'Fechamento');
+    if (!g && multi) y = fazTabPdf(y);
     assinaturas(y);
   });
   if (l.separar && multi) {
     doc.addPage(); let y = header(M, 'Fechamento geral');
     y = fechPdf(calc(l, null), y, 'Fechamento · todas as fazendas');
+    y = fazTabPdf(y);
     assinaturas(y);
   }
   const n = doc.getNumberOfPages();
@@ -1186,7 +1276,7 @@ async function gerarPdf() {
   if (!c.cab) { toast('Lance ao menos um peso'); return; }
   try {
     const buf = buildPdf(l);
-    const nome = 'romaneio-' + (l.pecuarista || 'lote').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + (l.data || '') + '.pdf';
+    const nome = 'romaneio-' + (l.pecuarista || 'lote').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + (l.data || '') + '.pdf';
     const ok = await salvarArquivo(nome, buf, 'application/pdf');
     if (ok) toast('PDF pronto');
   } catch (e) { toast('Erro ao gerar o PDF'); console.error(e); }
@@ -1205,24 +1295,29 @@ document.addEventListener('click', ev => {
   const t = ev.target.closest('[data-act]'); if (!t) return;
   const a = t.dataset.act, l = cur();
   switch (a) {
-    case 'novo': { const n = newLote(); DB.lotes.push(n); save(); curId = n.id; tab = 'dad'; K.sel = null; K.folha = null; K.buf = ''; renderEditor(); break; }
-    case 'abrir': curId = t.dataset.id; tab = 'pes'; K.sel = null; K.folha = null; K.buf = ''; K.cat = 'B'; renderEditor(); window.scrollTo(0, 0); break;
+    case 'novo': { const n = newLote(); DB.lotes.push(n); save(); curId = n.id; tab = 'dad'; K.sel = null; K.folha = null; K.faz = null; K.buf = ''; renderEditor(); break; }
+    case 'abrir': curId = t.dataset.id; tab = 'pes'; K.sel = null; K.folha = null; K.faz = null; K.buf = ''; K.cat = 'B'; renderEditor(); window.scrollTo(0, 0); break;
     case 'home': renderHome(); window.scrollTo(0, 0); break;
     case 'del': if (armed === t.dataset.id) { DB.lotes = DB.lotes.filter(x => x.id !== armed); armed = null; save(); if (!DB.lotes.length) DB.lotes.push(newLote()); renderHome(); } else { armed = t.dataset.id; renderHome(); const b = document.querySelector('[data-act="del"][data-id="' + armed + '"]'); if (b) { b.classList.add('arm'); b.textContent = 'Confirmar'; } setTimeout(() => { if (armed) { armed = null; if (view === 'home') renderHome(); } }, 4000); } break;
     case 'tab': tab = t.dataset.tab; K.sel = null; renderEditor(); window.scrollTo(0, 0); break;
     case 'dig': if (K.buf.length < 5) K.buf += t.dataset.d; K.buf = K.buf.replace(/^0+/, ''); renderDock(); break;
     case 'bk': K.buf = K.buf.slice(0, -1); renderDock(); break;
-    case 'cat': K.cat = t.dataset.cat; renderDock(); renderFolhas(); break;
+    case 'cat': K.cat = t.dataset.cat; if (!K.sel && l.fazModo !== 'col') { const fc = l.fazCat && l.fazCat[K.cat]; if (fc && l.fazendas.some(z => z.id === fc)) K.faz = fc; } renderDock(); renderFolhas(); break;
+    case 'faz': K.faz = t.dataset.id; if (!K.sel && l.fazModo !== 'col') { l.fazCat = l.fazCat || {}; l.fazCat[K.cat] = K.faz; save(); } renderDock(); break;
     case 'flag': K.flag = !K.flag; renderDock(); break;
     case 'setn': K.n = +t.dataset.n; if (!K.sel) { l.modo = K.n; save(); } renderDock(); break;
     case 'lancar': lancar(); break;
-    case 'cell': { const f = getFolha(l, t.dataset.folha), i = +t.dataset.idx; if (K.sel && K.sel.folha === f.id && K.sel.idx === i) { K.sel = null; K.buf = ''; K.n = l.modo; K.flag = false; } else { const c = f.cells[i]; K.sel = { folha: f.id, idx: i }; K.folha = f.id; K.buf = String(c.w); K.cat = c.cat; K.n = c.n; K.flag = !!c.flag; } renderFolhas(); renderDock(); break; }
+    case 'cell': { const f = getFolha(l, t.dataset.folha), i = +t.dataset.idx; if (K.sel && K.sel.folha === f.id && K.sel.idx === i) { K.sel = null; K.buf = ''; K.n = l.modo; K.flag = false; } else { const c = f.cells[i]; K.sel = { folha: f.id, idx: i }; K.folha = f.id; K.buf = String(c.w); K.cat = c.cat; K.n = c.n; K.flag = !!c.flag; K.faz = c.fz || f.faz; } renderFolhas(); renderDock(); break; }
     case 'cancelsel': K.sel = null; K.buf = ''; K.n = l.modo; K.flag = false; renderFolhas(); renderDock(); break;
     case 'delcell': { const f = getFolha(l, K.sel.folha); f.cells.splice(K.sel.idx, 1); K.sel = null; K.buf = ''; K.n = l.modo; K.flag = false; save(); renderFolhas(); renderDock(); renderMini(); toast('Peso apagado'); break; }
+    case 'colfaz': { const f = getFolha(l, t.dataset.folha), c = +t.dataset.col; const atual = (f.colFaz && f.colFaz[c]) || f.faz; const id = l.fazendas[(fzIdx(l, atual) + 1) % l.fazendas.length].id; f.colFaz = f.colFaz || []; f.colFaz[c] = id; f.cells.forEach((cell, k) => { if (Math.floor(k / 20) === c) cell.fz = id; }); save(); renderFolhas(); renderDock(); renderMini(); break; }
+    case 'proxcol': { const f = getFolha(l, K.folha); if (f.cells.length % 20 === 0) { toast('Você já está no começo de uma coluna'); break; } const col = Math.floor(f.cells.length / 20); const fz = (l.fazModo === 'col' && f.colFaz && f.colFaz[col]) || f.faz; while (f.cells.length % 20 !== 0) f.cells.push({ w: 0, cat: 'B', n: 0, flag: false, skip: true, fz }); save(); renderFolhas(); renderDock(); const nx = document.querySelector('.cell.next'); if (nx) nx.scrollIntoView({ block: 'nearest' }); break; }
+    case 'unskip': { const f = getFolha(l, t.dataset.folha); let j = +t.dataset.idx; while (j > 0 && f.cells[j - 1].skip) j--; if (f.cells.slice(j).every(c => c.skip)) { f.cells.splice(j); save(); renderFolhas(); renderDock(); } else toast('Já há pesos depois deste espaço'); break; }
+    case 'fazmodo': { l.fazModo = t.dataset.v; if (l.fazModo === 'col') { l.folhas.forEach(f => { f.colFaz = [0, 1, 2, 3].map(c => f.cells[c * 20] ? (f.cells[c * 20].fz || f.faz) : ((f.colFaz && f.colFaz[c]) || f.faz)); }); } save(); renderDados(); break; }
     case 'usar': K.folha = t.dataset.folha; K.sel = null; K.buf = ''; renderFolhas(); renderDock(); break;
-    case 'novafolha': { const last = getFolha(l, K.folha) || l.folhas[l.folhas.length - 1]; const f = { id: uid(), faz: last.faz, rend: {}, cells: [] }; l.folhas.push(f); K.folha = f.id; K.sel = null; save(); renderFolhas(); renderDock(); const el = document.querySelector('[data-folhabox="' + f.id + '"]'); if (el) el.scrollIntoView({ block: 'start' }); break; }
+    case 'novafolha': { const last = getFolha(l, K.folha) || l.folhas[l.folhas.length - 1]; const f = { id: uid(), faz: last.faz, colFaz: (last.colFaz || []).slice(), rend: {}, cells: [] }; l.folhas.push(f); K.folha = f.id; K.sel = null; save(); renderFolhas(); renderDock(); const el = document.querySelector('[data-folhabox="' + f.id + '"]'); if (el) el.scrollIntoView({ block: 'start' }); break; }
     case 'addfaz': l.fazendas.push({ id: uid(), nome: '' }); save(); renderDados(); break;
-    case 'delfaz': { const id = t.dataset.id; const rest = l.fazendas.filter(z => z.id !== id); l.folhas.forEach(f => { if (f.faz === id) f.faz = rest[0].id; }); l.fazendas = rest; if (rest.length < 2) l.separar = false; save(); renderDados(); break; }
+    case 'delfaz': { const id = t.dataset.id; const rest = l.fazendas.filter(z => z.id !== id); l.folhas.forEach(f => { if (f.faz === id) f.faz = rest[0].id; f.cells.forEach(c => { if (c.fz === id) c.fz = rest[0].id; }); if (f.colFaz) f.colFaz = f.colFaz.map(z => z === id ? rest[0].id : z); }); Object.keys(l.fazCat || {}).forEach(k => { if (l.fazCat[k] === id) delete l.fazCat[k]; }); if (K.faz === id) K.faz = null; l.fazendas = rest; if (rest.length < 2) l.separar = false; save(); renderDados(); break; }
     case 'separar': l.separar = t.dataset.v === '1'; save(); renderDados(); break;
     case 'modo': l.modo = +t.dataset.n; K.n = l.modo; save(); renderDados(); break;
     case 'pdf': gerarPdf(); break;
@@ -1240,7 +1335,12 @@ document.addEventListener('input', ev => {
 });
 document.addEventListener('change', ev => {
   const t = ev.target, l = cur();
-  if (t.dataset && t.dataset.folhafaz) { getFolha(l, t.dataset.folhafaz).faz = t.value; save(); renderMini(); }
+  if (t.dataset && t.dataset.fazcat && l) {
+    const k = t.dataset.fazcat; l.fazCat = l.fazCat || {};
+    if (t.value) { l.fazCat[k] = t.value; l.folhas.forEach(f => f.cells.forEach(c => { if (c.cat === k) c.fz = t.value; })); }
+    else delete l.fazCat[k];
+    save(); renderDados(); renderMini();
+  }
 });
 document.addEventListener('keydown', ev => {
   if (view !== 'edit' || tab !== 'pes') return;
